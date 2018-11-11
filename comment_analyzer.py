@@ -7,14 +7,12 @@ import re
 from autocorrect import spell
 import time
 
-reddit = bot_login.authenticate()
-
-db_tools = db_t.sentiment_db()
 
 class stream_analyzer():
 
     df_sentiment_dict = pd.read_excel('sentiment_dict.xlsx')
     word_l = df_sentiment_dict['Word'].tolist()
+    print ('Sentiment dicitonary loaded')
 
     def __init__ (self, comment, sub_id, com_id, subred, user_id):
 
@@ -27,13 +25,17 @@ class stream_analyzer():
 
     def sentiment_analyzer (self):
         for word in self.word_stream:
-            start = time.time()
-            word = spell(str(re.findall('[A-Za-z]+', word))[2:-2]).lower()
+            print('processing the following word: {}'.format(word))
+            #start = time.time()
+            if 'http' not in word:
+                word = spell(str(re.findall('[A-Za-z]+', word))[2:-2]).lower()
+
             if (word in stream_analyzer.word_l) == True:
+                print ('The following word was processed: {}'.format(word))
                 t_row = stream_analyzer.df_sentiment_dict[stream_analyzer.df_sentiment_dict['Word'] == word].values.tolist()
                 t_row[0].insert(0, self.com_id)
                 db_tools.insert_row(t_row)
-
+                print('The following word was inserted into the data base: {}'.format(word))
 
         t_row = [(self.com_id, self.user_id, self.sub_id, self.subred)]
         db_tools.insert_row(t_row)
@@ -42,23 +44,29 @@ class stream_analyzer():
 def comment_stream_reader (cs):
     n = 0
     for comment in cs:
+        start = time.time()
         body = comment.body.split()
-        if len(body) < 30:
-            sub_id = comment.submission.id
-            subred = comment.subreddit.display_name
-            user_id = comment.author.name
-            s_an = stream_analyzer(body,sub_id,str(comment.id),subred, user_id)
-            s_an.sentiment_analyzer()
+        # if len(body) < 50:
+        #     sub_id = comment.submission.id
+        #     subred = comment.subreddit.display_name
+        #     user_id = comment.author.name
+            # s_an = stream_analyzer(body,sub_id,str(comment.id),subred, user_id)
+            # s_an.sentiment_analyzer()
 
         n +=1
-        print (n)
+
         if (n%100) == 0:
-            return ('read 100 comments')
+            return ([time.time(), start])
+            #return ('time taken for 100 comments: {}'.format (time.time() - start))
+            #return ('read 100 comments')
+
+reddit = bot_login.authenticate()
+db_tools = db_t.sentiment_db()
 
 
 while True:
     comment_stream = reddit.subreddit('all').stream.comments()
-    print (comment_stream_reader(comment_stream))
+    print (comment_stream_reader(comment_stream)[0]-comment_stream_reader(comment_stream)[1])
 
 
 
