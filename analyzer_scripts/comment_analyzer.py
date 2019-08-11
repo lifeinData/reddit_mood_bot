@@ -1,11 +1,19 @@
-from authentication_scripts import bot_login
-from database_scripts import database_tools as db_t
+# import .authentication_scripts.bot_login as bot_login
+# from reddit_mood_bot.database_scripts import database_tools as db_t
 import praw
 import numpy
 import pandas as pd
 import re
 import time
 
+# Custom Packages
+import sys
+
+sys.path.insert(0, 'C:/Python Projects/reddit_mood_bot/authentication_scripts')
+sys.path.insert(0, 'C:/Python Projects/reddit_mood_bot/database_scripts')
+
+import bot_login
+import database_tools as db_t
 
 class stream_analyzer():
 
@@ -45,12 +53,12 @@ def comment_stream_reader (cs):
     for comment in cs:
         start = time.time()
         body = comment.body.split()
-        # if len(body) < 50:
-        #     sub_id = comment.submission.id
-        #     subred = comment.subreddit.display_name
-        #     user_id = comment.author.name
-            # s_an = stream_analyzer(body,sub_id,str(comment.id),subred, user_id)
-            # s_an.sentiment_analyzer()
+        if len(body) < 50:
+            sub_id = comment.submission.id
+            subred = comment.subreddit.display_name
+            user_id = comment.author.name
+            s_an = stream_analyzer(body,sub_id,str(comment.id),subred, user_id)
+            s_an.sentiment_analyzer()
 
         n +=1
 
@@ -59,9 +67,9 @@ def comment_stream_reader (cs):
             #return ('time taken for 100 comments: {}'.format (time.time() - start))
             #return ('read 100 comments')
 
+
 reddit = bot_login.authenticate()
 db_tools = db_t.sentiment_db()
-
 
 while True:
     comment_stream = reddit.subreddit('all').stream.comments()
