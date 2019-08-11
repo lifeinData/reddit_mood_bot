@@ -1,10 +1,9 @@
-import bot_script.bot_login as bot_login
-import bot_script.database_tools as db_t
+from authentication_scripts import bot_login
+from database_scripts import database_tools as db_t
 import praw
 import numpy
 import pandas as pd
 import re
-from autocorrect import spell
 import time
 
 
@@ -28,7 +27,7 @@ class stream_analyzer():
             print('processing the following word: {}'.format(word))
             #start = time.time()
             if 'http' not in word:
-                word = spell(str(re.findall('[A-Za-z]+', word))[2:-2]).lower()
+                word = str(re.findall('[A-Za-z]+', word))[2:-2]
 
             if (word in stream_analyzer.word_l) == True:
                 print ('The following word was processed: {}'.format(word))
