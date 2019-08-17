@@ -43,32 +43,42 @@ class stream_analyzer():
                     if self.total_word_stream_hit > 1:
                         t_row = [(self.com_id, self.user_id, self.sub_id, self.subred)]
                         db_tools.insert_row(t_row)
-                        print (round((self.total_word_stream_hit/self.total_word_stream_count) * 100,2))
 
 
-def comment_stream_reader(cs):
+def comment_stream_reader():
     n = 0
     
-    for comment in cs:
-        n += 1
+    restart = True
+    while restart:
+        cs = reddit.subreddit('depression').stream.comments()
         start = time.time()
-        body = comment.body.split()
-        if len(body) < 50 and 'http' not in body:
-            sub_id = comment.submission.id
-            subred = comment.subreddit.display_name
-            user_id = comment.author.name
-            s_an = stream_analyzer(
-                body, sub_id, str(comment.id), subred, user_id)
-            s_an.sentiment_analyzer()
+        for comment in cs:
+            n += 1
+            body = comment.body.split()
+            print (n)
 
-        if (n % 100) == 0:
-            print ('time taken for 100 comments: {}'.format (time.time() - start))
-            print ('read 100 comments')
+            if ((time.time() - start) > 10):
+                print ('Restarting the comment stream')
+                break
 
+            if len(body) < 50 and 'http' not in body:
+                sub_id = comment.submission.id
+                subred = comment.subreddit.display_name
+                user_id = comment.author.name
+                s_an = stream_analyzer(
+                    body, sub_id, str(comment.id), subred, user_id)
+                s_an.sentiment_analyzer()
+
+            if (n % 100) == 0:
+                print ('time taken for 100 comments: {}'.format (time.time() - start))
+                print ('read 100 comments')
+                print ("Current memory taken is: {} mb".format(db_tools.get_db_size("reddit_mood")))
+                start = time.time()
+            
+            elif db_tools.get_db_size("reddit_mood") > 100:
+                restart = False
+                break
 
 reddit = bot_login.authenticate()
 db_tools = db_tools.db_tools()
-
-while True:
-    comment_stream = reddit.subreddit('all').stream.comments()
-    comment_stream_reader(comment_stream)
+comment_stream_reader()

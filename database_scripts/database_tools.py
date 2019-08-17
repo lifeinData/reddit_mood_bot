@@ -1,8 +1,13 @@
 # TODO: delete the sys import method later on, only need to invoke it once
-import database_scripts.db_execution_objs as db_func
+
 import sqlite3
+import re
+
+# Custom Imports
 import sys
 sys.path.insert(0, 'C:/Python Projects/reddit_mood_bot')
+import database_scripts.db_execution_objs as db_func
+import database_scripts.queries.analytics_query
 
 
 class db_tools:
@@ -22,3 +27,13 @@ class db_tools:
                 target_row[0])
 
         self.conn.commit()
+
+    def get_db_size(self, db_name):
+        self.cursor.execute(
+            """SELECT pg_size_pretty(pg_database_size(%s))""",
+            (db_name,)
+        )
+
+        db_size = self.cursor.fetchall()
+        return round (float(re.findall("\d+",str(db_size[0]))[0])/1000, 2)
+
