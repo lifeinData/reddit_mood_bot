@@ -5,6 +5,9 @@ import pandas as pd
 import re
 import time
 import requests
+import math
+from datetime import datetime
+
 
 # Custom Packages
 import sys
@@ -29,45 +32,23 @@ class stream_analyzer():
         self.total_word_stream_count = len(comment)
         self.total_word_stream_hit = 0
 
-    def get_dynamic_seconds(self, start_time = None):
-        if start_time is None:
-            print ('first time run through')
-            return '300s'
-        else:
-            now_time = int(time.time())
-            # start_time is when the last time the response had data
-            diff_sec = int(time.time()) - start_time
-
-            if diff_sec <= 1:
-                time.sleep(1)
-                diff_sec = 1
-            else:
-                time.sleep(1)
-                diff_sec = math.ceil(diff_sec + 1)
-                
-            print (str(diff_sec) + 's')
-        return str(diff_sec) + 's'
-
     def sentiment_analyzer(self):
         for word in self.word_stream:
+            try:
+                word = str(re.findall('[A-Za-z]+', word)[0])
+            except IndexError:
+                pass
 
-            #start = time.time()
-                try:
-                    word = str(re.findall('[A-Za-z]+', word)[0])
-                except IndexError:
-                    print ('error word: {}'.format(word))
-                    
-                if (word.lower() in stream_analyzer.word_l) == True:
-                    print ('inserted comment id {}'.format(self.com_id))
-                    # The actual sentiment of the word that is a hit
-                    self.total_word_stream_hit += 1
-                    t_row = stream_analyzer.df_sentiment_dict[stream_analyzer.df_sentiment_dict['Word'] == word.lower()].values.tolist()
-                    t_row[0].insert(0, self.com_id)
-                    db_tools.insert_row(t_row)
+            if (word.lower() in stream_analyzer.word_l) == True:
+                # The actual sentiment of the word that is a hit
+                self.total_word_stream_hit += 1
+                t_row = stream_analyzer.df_sentiment_dict[stream_analyzer.df_sentiment_dict['Word'] == word.lower()].values.tolist()
+                t_row[0].insert(0, self.com_id)
+                db_tools.insert_row(t_row)
 
-                    # Insert meta data on the comment
-                    t_row = [(self.com_id, self.user_id, self.sub_id, self.subred)]
-                    db_tools.insert_row(t_row)
+                # Insert meta data on the comment
+                t_row = [(self.com_id, self.user_id, self.sub_id, self.subred)]
+                db_tools.insert_row(t_row)
 
 
 # TODO: not 100% fidelity yet in terms of non-repeated comments, need to make that function
@@ -75,13 +56,21 @@ def comment_stream_reader():
     n = 0
     restart = True
     first_run = True
+    stream_start_time = None
 
     while restart:
-        # payload = {'after': get_dynamic_seconds(current_epoch), 'size':'500', 'subreddit':'AskReddit', 'sort':'desc', 'before':get_dynamic_seconds(current_epoch)}
-        payload = {'after': '300s', 'size':'500', 'subreddit':'AskReddit', 'sort':'desc'}
-        resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params = payload)
+        payload = {'after': get_dynamic_seconds(stream_start_time), 'size':'500', 'subreddit':'AskReddit', 'sort':'desc'}
         
+        # TODO: Probably can write this in a cleaner way
+        if first_run == False: 
+            if len(resp.json()['data']) > 0:
+                stream_start_time = int(time.time())
+                n += len(resp.json()['data'])
+                print ("Current memory taken is: {} mb after {} comments in this current run".format(db_tools.get_db_size("reddit_mood"),n))
+
+        resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params = payload)
         for data_point in resp.json()['data']:
+            first_run = False
             comment_body = data_point['body'].split()
 
             if len(comment_body) < 50 and 'http' not in comment_body:
@@ -91,7 +80,41 @@ def comment_stream_reader():
                 s_an = stream_analyzer(
                     comment_body, comment_subred, str(comment_id), comment_subred, comment_author)
                 s_an.sentiment_analyzer()
+        
+        
+        if db_tools.get_db_size("reddit_mood") > 100:
+                restart = False
+                break
+                
+        # Things that should happen after all comments in this stream are analyzed
 
+# TODO: Make post streaming stuff into class, there will be lots of stats and stuff for post streaming
+
+# def post_stream_processing():
+# db_tools.get_db_size("reddit_mood") > 100:
+    #             restart = False
+    #             break
+
+def get_dynamic_seconds(previous_time = None):
+    if previous_time is None:
+        print ('first time run through') 
+        return '300s'
+    else:
+        print ('The stream started to analyze the comments on {}, now is: {} '.format(time.strftime('%H:%M:%S', time.localtime(previous_time)), datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        now_time = int(time.time())
+        # start_time is when the last time the response had data
+        diff_sec = int(time.time()) - previous_time
+
+        if diff_sec <= 1:
+            time.sleep(1)
+            diff_sec = 1
+        else:
+            time.sleep(1)
+            diff_sec = math.ceil(diff_sec + 1)
+            
+        print (str(diff_sec) + 's')
+
+    return str(diff_sec) + 's'
     # while restart:
     #     cs = reddit.subreddit('depression').stream.comments()
     #     start = time.time()
