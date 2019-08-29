@@ -3,12 +3,32 @@ import requests
 import time
 import datetime
 import math
-import pandas as pdrun_scraper = True
+import pandas as pd
 run_scraper = True
 current_epoch = None
 time_list = []
 first_run = True
 n = 0
+
+
+def get_dynamic_seconds(start_time=None):
+    if start_time is None:
+        print('used the default one!')
+        return '300s'
+    else:
+        now_time = int(time.time())
+        # start_time is when the last time the response had data
+        diff_sec = int(time.time()) - start_time
+
+        if diff_sec <= 1:
+            time.sleep(1)
+            diff_sec = 1
+        else:
+            time.sleep(1)
+            diff_sec = math.ceil(diff_sec + 1)
+
+        print(str(diff_sec) + 's')
+        return str(diff_sec) + 's'
 
 while run_scraper:
     payload = {'after': get_dynamic_seconds(current_epoch), 'size':'500', 'subreddit':'AskReddit', 'sort':'desc'}

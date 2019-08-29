@@ -17,7 +17,7 @@ import authentication_scripts.bot_login as bot_login
 
 class stream_analyzer():
     #TODO: df_sentiment_dict should be part of the database
-    df_sentiment_dict = pd.read_excel('sentiment_dict.xlsx')
+    df_sentiment_dict = pd.read_excel(r'C:\Python Projects\reddit_mood_bot\sentiment_dict.xlsx')
     word_l = df_sentiment_dict['Word'].tolist()
     print('Sentiment dicitonary loaded')
 
@@ -85,7 +85,7 @@ def comment_stream_reader():
         if db_tools.get_db_size("reddit_mood") > 100:
                 restart = False
                 break
-                
+
         # Things that should happen after all comments in this stream are analyzed
 
 # TODO: Make post streaming stuff into class, there will be lots of stats and stuff for post streaming
