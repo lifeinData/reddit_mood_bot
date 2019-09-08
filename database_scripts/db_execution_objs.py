@@ -10,7 +10,7 @@ def get_db_funct_object():
     
         cursor = connection.cursor()
         print ("Successfully logged into reddit_mood database")
-        return [cursor,connection]
+        return [cursor, connection]
         
     except (Exception, psycopg2.Error) as error:
         print ("Error while connecting to PostgreSQL", error)
