@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, 'C:/Python Projects/reddit_mood_bot')
 import database_scripts.database_tools as db_tools
 import authentication_scripts.bot_login as bot_login
+import analyzer_scripts.helper_methods.time_util as time_util
 
 
 class stream_analyzer():
@@ -56,31 +57,26 @@ class stream_analyzer():
 
 # TODO: not 100% fidelity yet in terms of non-repeated comments, need to make that function
 def comment_stream_reader():
-    n = 0
+    total_comments = 0
     restart = True
     first_run = True
     stream_start_time = None
 
     while restart:
-        payload = {'after': get_dynamic_seconds(stream_start_time), 'size': '500', 'subreddit': 'AskReddit',
+        # TODO: (LOW) parameter constants
+        payload_time = get_dynamic_seconds(stream_start_time)
+        payload_subred = ['Depression,news,worldnews,Happy']
+        payload = {'after': payload_time, 'size': '500',
+                   'subreddit': payload_subred,
                    'sort': 'desc'}
-
-        # TODO: Probably can write this in a cleaner way
-        if first_run == False:
-            if len(resp.json()['data']) > 0:
-                stream_start_time = int(time.time())
-                n += len(resp.json()['data'])
-                print("Current memory taken is: {} mb after {} comments in this current run".format(
-                    db_tools.get_db_size("reddit_mood"), n))
-
         resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload)
 
         for data_point in resp.json()['data']:
             first_run = False
             comment_body = data_point['body'].split()
-
-            if len(comment_body) < 50 and 'http' not in comment_body:
-                comment_time = convert_to_utc_time(data_point['created_utc'])
+            print(resp.json()['data'][0]['subreddit'])
+            if len(comment_body) < 600 and 'http' not in comment_body:
+                comment_time = time_util.convert_to_utc_time(data_point['created_utc'])
                 comment_subred = data_point['subreddit']
                 comment_author = data_point['author']
                 comment_id = data_point['id']
@@ -88,8 +84,15 @@ def comment_stream_reader():
                     comment_body, comment_subred, str(comment_id), comment_subred, comment_author, comment_time)
                 s_an.sentiment_analyzer()
 
-        if db_tools.get_db_size("reddit_mood") > 100:
-            restart = False
+        # TODO: Probably can write this in a cleaner way
+        if not first_run:
+            if len(resp.json()['data']) > 0:
+                stream_start_time = int(time.time())
+                total_comments += len(resp.json()['data'])
+                print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {} ".format(
+                    db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload_time))
+
+        if db_tools.db_full_check("reddit_mood", db_tools):  # Stop limit for database collection
             break
 
         # Things that should happen after all comments in this stream are analyzed
@@ -97,25 +100,17 @@ def comment_stream_reader():
 
 # TODO: Make post streaming stuff into class, there will be lots of stats and stuff for post streaming
 
-# def post_stream_processing():
-# db_tools.get_db_size("reddit_mood") > 100:
-#             restart = False
-#             break
-def convert_to_utc_time(t):
-    dt_obj = datetime.utcfromtimestamp(t)
-
-    return str(dt_obj)
-
 def get_dynamic_seconds(previous_time=None):
+    # previous_time is when the last time the response had data unless it's the first run
     if previous_time is None:
-        print('first time run through')
+        print('First time run through. Going back 300s')
         return '300s'
+
     else:
-        print('The stream started to analyze the comments on {}, now is: {} '.format(
-            time.strftime('%H:%M:%S', time.localtime(previous_time)), datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-        now_time = int(time.time())
-        # start_time is when the last time the response had data
         diff_sec = int(time.time()) - previous_time
+        print('Collection Stream started on: {} || Current time: {} || Time since last collection: {}s'.format(
+            time.strftime('%H:%M:%S', time.localtime(previous_time)), datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            diff_sec))
 
         if diff_sec <= 1:
             time.sleep(1)
@@ -124,38 +119,7 @@ def get_dynamic_seconds(previous_time=None):
             time.sleep(1)
             diff_sec = math.ceil(diff_sec + 1)
 
-        print(str(diff_sec) + 's')
-
     return str(diff_sec) + 's'
-    # while restart:
-    #     cs = reddit.subreddit('depression').stream.comments()
-    #     start = time.time()
-    #     for comment in cs:
-    #         n += 1
-    #         body = comment.body.split()
-    #         print (n)
-
-    #         if ((time.time() - start) > 10):
-    #             print ('Restarting the comment stream')
-    #             break
-
-    #         if len(body) < 50 and 'http' not in body:
-    #             sub_id = comment.submission.id
-    #             subred = comment.subreddit.display_name
-    #             user_id = comment.author.name
-    #             s_an = stream_analyzer(
-    #                 body, sub_id, str(comment.id), subred, user_id)
-    #             s_an.sentiment_analyzer()
-
-    #         if (n % 100) == 0:
-    #             print ('time taken for 100 comments: {}'.format (time.time() - start))
-    #             print ('read 100 comments')
-    #             print ("Current memory taken is: {} mb".format(db_tools.get_db_size("reddit_mood")))
-    #             start = time.time()
-
-    #         elif db_tools.get_db_size("reddit_mood") > 100:
-    #             restart = False
-    #             break
 
 
 reddit = bot_login.authenticate()
