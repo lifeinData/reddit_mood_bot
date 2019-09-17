@@ -31,14 +31,15 @@ class db_tools:
 
     def get_db_size(self, db_name):
         self.cursor.execute(
-            """SELECT pg_size_pretty(pg_database_size(%s))""",
+            """SELECT pg_database_size(%s)""",
             (db_name,)
         )
         db_size = self.cursor.fetchall()
-        return round(float(re.findall("\d+", str(db_size[0]))[0]) / 1000, 2)
+        return round(float(re.findall("\d+", str(db_size[0]))[0]) / 1000000, 2)
 
     def db_full_check(self, db_name, db_obj):
-        if db_obj.get_db_size(db_name) > 100:
+        # TODO: parameterize
+        if db_obj.get_db_size(db_name) > 1000:
             return True
 
         return False
