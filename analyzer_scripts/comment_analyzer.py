@@ -63,39 +63,44 @@ def comment_stream_reader():
     stream_start_time = None
 
     while restart:
-        # TODO: (LOW) parameter constants
-        payload_time = get_dynamic_seconds(stream_start_time)
-        payload_subred = ['Depression,news,worldnews,Happy']
-        payload = {'after': payload_time, 'size': '500',
-                   'subreddit': payload_subred,
-                   'sort': 'desc'}
-        resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload)
+        try:
+            # TODO: (LOW) parameter constants
+            payload_time = get_dynamic_seconds(stream_start_time)
+            payload_subred = ['Depression,news,worldnews,Happy']
+            payload = {'after': payload_time, 'size': '500',
+                       'subreddit': payload_subred,
+                       'sort': 'desc'}
+            resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload)
 
-        for data_point in resp.json()['data']:
-            first_run = False
-            comment_body = data_point['body'].split()
-            print(resp.json()['data'][0]['subreddit'])
-            if len(comment_body) < 600 and 'http' not in comment_body:
-                comment_time = time_util.convert_to_utc_time(data_point['created_utc'])
-                comment_subred = data_point['subreddit']
-                comment_author = data_point['author']
-                comment_id = data_point['id']
-                s_an = stream_analyzer(
-                    comment_body, comment_subred, str(comment_id), comment_subred, comment_author, comment_time)
-                s_an.sentiment_analyzer()
+            for data_point in resp.json()['data']:
+                first_run = False
+                comment_body = data_point['body'].split()
+                print(resp.json()['data'][0]['subreddit'])
+                if len(comment_body) < 600 and 'http' not in comment_body:
+                    comment_time = time_util.convert_to_utc_time(data_point['created_utc'])
+                    comment_subred = data_point['subreddit']
+                    comment_author = data_point['author']
+                    comment_id = data_point['id']
+                    s_an = stream_analyzer(
+                        comment_body, comment_subred, str(comment_id), comment_subred, comment_author, comment_time)
+                    s_an.sentiment_analyzer()
 
-        # TODO: Probably can write this in a cleaner way
-        if not first_run:
-            if len(resp.json()['data']) > 0:
-                stream_start_time = int(time.time())
-                total_comments += len(resp.json()['data'])
-                print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {} ".format(
-                    db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload_time))
+            # TODO: Probably can write this in a cleaner way
+            if not first_run:
+                if len(resp.json()['data']) > 0:
+                    stream_start_time = int(time.time())
+                    total_comments += len(resp.json()['data'])
+                    print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {} ".format(
+                        db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload_time))
 
-        if db_tools.db_full_check("reddit_mood", db_tools):  # Stop limit for database collection
-            break
+            if db_tools.db_full_check("reddit_mood", db_tools):  # Stop limit for database collection
+                restart = False
+                break
 
-        # Things that should happen after all comments in this stream are analyzed
+        except:
+            pass
+
+            # Things that should happen after all comments in this stream are analyzed
 
 
 # TODO: Make post streaming stuff into class, there will be lots of stats and stuff for post streaming
