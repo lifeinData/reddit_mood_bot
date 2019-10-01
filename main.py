@@ -1,4 +1,5 @@
-import authentication_scripts.bot_login as bot_login
+from Scripts import redditBot_auth as bot_login
+
 
 def main():
     reddit = bot_login.authenticate()

@@ -1,14 +1,12 @@
 # TODO: delete the sys import method later on, only need to invoke it once
 
-import sqlite3
 import re
 
 # Custom Imports
 import sys
 
 sys.path.insert(0, 'C:/Python Projects/reddit_mood_bot')
-import database_scripts.db_execution_objs as db_func
-import database_scripts.queries.analytics_query
+from Scripts.database.query_executors import db_execution_objs as db_func
 
 
 class db_tools:
@@ -17,14 +15,15 @@ class db_tools:
         self.cursor, self.conn = db_func.get_db_funct_object()
 
     def insert_row(self, target_row):
-        # auto detect which table it should be inserted into
-        if len(target_row[0]) > 4:
+        # TODO: Insert query_statements should be part of the query_statements directory
+        # TODO: A better way to auto detect which table it should be inserted into
+        if len(target_row[0]) > 5:
             self.cursor.execute(
-                """INSERT INTO COMMENT_SENTIMENT (com_ID,Word,Positive,Negative,Anger,Anticipation,Disgust,Fear,Joy,Sadness, Surprise,Trust) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                """INSERT INTO comment_sentiment (com_id, word, positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, trust) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 target_row[0])
         else:
             self.cursor.execute(
-                """INSERT INTO COMMENT_ATR (com_ID, user_id, sub_id, subred) VALUES (%s, %s, %s, %s)""",
+                """INSERT INTO COMMENT_ATR (com_id, user_id, sub_id, subred, comment_time) VALUES (%s, %s, %s, %s, %s)""",
                 target_row[0])
 
         self.conn.commit()
