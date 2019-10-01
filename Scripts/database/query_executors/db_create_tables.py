@@ -2,9 +2,9 @@
 # TODO: Logging
 import sys
 sys.path.insert(0, 'C:/Python Projects/reddit_mood_bot')
-import database_scripts.db_execution_objs as db_func
-from database_scripts.queries.create_query import COMMENT_SENTIMENT, COMMENT_ATR
-import psycopg2
+from Scripts import database as db_func
+from Scripts.database import COMMENT_SENTIMENT, COMMENT_ATR
+
 
 def create_mood_table(cursor):
     cursor.execute(COMMENT_SENTIMENT)

@@ -3,7 +3,7 @@ import psycopg2
 def get_db_funct_object():
     try:
         connection = psycopg2.connect(user="postgres",
-                                      password="hello123",
+                                      password="Lenovo003352",
                                       host="127.0.0.1",
                                       port="5432",
                                       database="reddit_mood")
