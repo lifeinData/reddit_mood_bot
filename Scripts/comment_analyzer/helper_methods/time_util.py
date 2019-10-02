@@ -15,4 +15,4 @@ def get_last_response_time(payload):
     # resp2 = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload)
     time_list = [data_point['created_utc'] for data_point in resp.json()['data']]
     for data_point in resp.json()['data']:
-        return [int(data_point['retrieved_on'] - data_point['created_utc']) + 10, data_point['created_utc']]
+        return [int(time.time() - data_point['created_utc']), data_point['created_utc']]
