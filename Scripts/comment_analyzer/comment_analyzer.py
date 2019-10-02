@@ -59,6 +59,7 @@ def comment_stream_reader():
     restart = True
     first_run = True
     payload_time = None
+
     payload = PayloadConfigs()
     while restart:
         # try:
@@ -91,11 +92,13 @@ def comment_stream_reader():
             if len(resp.json()['data']) > 0:
                 payload.set_comment_flag(True)
                 stream_start_time = int(time.time())
+
                 total_comments += len(resp.json()['data'])
+
                 # print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {} ".format(
                 #     db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload_time))
-                print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in ".format(
-                    db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data'])))
+                print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {}s".format(
+                    db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload.get_lag_time()))
 
             else:
                 payload.set_comment_flag(False)
