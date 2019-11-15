@@ -91,14 +91,10 @@ class PayloadConfigs():
             # self.get_first_payload_time()  # Reset the self.comment_latest_retrieval time
             # Use the same length time as the previous after parameter
             time.sleep(2)
-            #TODO: think about the dynamic lag portion
+            # TODO: think about the dynamic lag portion
             return self.after_param - 2
             # diff_sec = int(time.time() - self.comment_latest_retrieval)
             # self.comment_latest_retrieval += 10
-
-
-
-
 
     def check_latest_lag(self, last_retrieval):
         # Determines if the lag is x% better than previous retrieval time
@@ -108,13 +104,13 @@ class PayloadConfigs():
         prct_better_lag = 0.1
         # if last_retrieval > round((1 + prct_better_lag) * tmp_lastest_time, 0):
         if tmp_lastest_time > last_retrieval:
-            faster+=1
-            print ('faster times:', faster)
+            faster += 1
+            print('faster times:', faster)
             return [tmp_lastest_time, True]
 
         elif last_retrieval > tmp_lastest_time:
-            slower+=1
-            print ('slower times:', slower)
+            slower += 1
+            print('slower times:', slower)
             return [last_retrieval, True]
 
         else:
