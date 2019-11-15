@@ -16,6 +16,7 @@ class PayloadConfigs():
         self.first_run = True
         self.payload_timer = None
         self.comment_flag = None
+        self.lag_reset_flag = False
 
     def set_comment_flag(self, flag_bool):
         self.comment_flag = flag_bool
@@ -62,14 +63,12 @@ class PayloadConfigs():
         diff_sec = int(
             time.time() - self.comment_latest_retrieval + 1)  # adding 1 second will counter any chance of reoccuring comment
 
-        lag_reset_flag = False
-
         # TODO: make into rest end points
         print('Current time: {} || Time of last positive stream: {}s || Lag time: {}s || Lag Reset: {}'.format(
             datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             time.strftime('%H:%M:%S', time.localtime(self.comment_latest_retrieval)),
             self.after_param,
-            str(lag_reset_flag)))
+            str(self.lag_reset_flag)))
 
         if diff_sec <= 1:
             time.sleep(1)
@@ -88,17 +87,19 @@ class PayloadConfigs():
             return diff_sec
 
         elif self.comment_flag:
-            # self.get_first_payload_time()  # Reset the self.comment_latest_retrieval time
+            # self.get_first_payload_time()
+            # Reset the self.comment_latest_retrieval time
             # Use the same length time as the previous after parameter
             time.sleep(2)
             # TODO: think about the dynamic lag portion
+            self.lag_reset_flag = False
             return self.after_param - 2
             # diff_sec = int(time.time() - self.comment_latest_retrieval)
             # self.comment_latest_retrieval += 10
 
     def check_latest_lag(self, last_retrieval):
         # Determines if the lag is x% better than previous retrieval time
-        faster, slower = 0, 0
+        faster, slower, no_change = 0, 0, 0
         self.get_first_payload_time()
         tmp_lastest_time = self.comment_latest_retrieval
         prct_better_lag = 0.1
@@ -114,6 +115,8 @@ class PayloadConfigs():
             return [last_retrieval, True]
 
         else:
+            no_change += 1
+            print('did not change times: ', no_change)
             return [last_retrieval, False]
 
     def get_lag_time(self):
