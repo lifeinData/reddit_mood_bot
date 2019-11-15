@@ -5,11 +5,6 @@ import datetime
 import math
 import pandas as pd
 
-run_scraper = True
-current_epoch = None
-time_list = []
-first_run = True
-n = 0
 
 
 def get_dynamic_seconds(start_time=None):
@@ -32,6 +27,12 @@ def get_dynamic_seconds(start_time=None):
         return str(diff_sec) + 's'
 
 
+run_scraper = True
+current_epoch = None
+time_list = []
+first_run = True
+n = 0
+
 while run_scraper:
     payload = {'after': get_dynamic_seconds(current_epoch), 'size': '500', 'subreddit': 'AskReddit', 'sort': 'desc'}
 
@@ -43,8 +44,8 @@ while run_scraper:
 
     print('# of comments: {} ||| Elasped time: {}'.format(len(resp.json()['data']), int(time.time()) - current_epoch))
 
-    if len(resp.json()['data']) > 1 and first_run == False:
-        print('rest current time counter')
+    if len(resp.json()['data']) > 1 and not first_run:
+        print('reset current time counter')
         current_epoch = int(time.time())
 
     for d in resp.json()['data']:

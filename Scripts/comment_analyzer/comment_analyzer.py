@@ -14,6 +14,7 @@ from Scripts.database.query_executors import database_tools as db_tools
 from Scripts.redditBot_auth import bot_login
 from Scripts.comment_analyzer.helper_methods import time_util
 from Scripts.comment_analyzer.PayloadConfigs import PayloadConfigs
+from Scripts.comment_analyzer.Logger_Messages.Stream_Msg import StreamMsg
 
 class stream_analyzer():
     # TODO: df_sentiment_dict should be part of the database
@@ -58,14 +59,11 @@ def comment_stream_reader():
     total_comments = 0
     restart = True
     first_run = True
-    payload_time = None
-
     payload = PayloadConfigs()
+    stream_logger = StreamMsg()
     while restart:
-        # try:
 
         payload_param = payload.get_payload()
-        # payload_time = get_dynamic_seconds(first_run, payload)
         time.sleep(1)
         resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload_param)
 
@@ -73,9 +71,9 @@ def comment_stream_reader():
             for data_point in resp.json()['data']:
                 first_run = False
                 comment_body = data_point['body'].split()
-                print(resp.json()['data'][0]['subreddit'])
+                stream_logger.append_subred_stats(resp.json()['data'][0]['subreddit'])
 
-                if len(comment_body) < 600 and 'http' not in comment_body:
+                if len(comment_body) < 600:
                     comment_time = time_util.convert_to_utc_time(data_point['created_utc'])
                     comment_subred = data_point['subreddit']
                     comment_author = data_point['author']
@@ -94,10 +92,8 @@ def comment_stream_reader():
                 stream_start_time = int(time.time())
 
                 total_comments += len(resp.json()['data'])
-
-                # print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {} ".format(
-                #     db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload_time))
-                print("DB Size: {} mb | Tot Comments: {} || Current Collect: {} in {}s".format(
+                stream_logger.print_subreddit_count()
+                print("DB Size: {} mb | Tot Comments: {} || Current Collection: {} in {}s".format(
                     db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload.get_lag_time()))
 
             else:
@@ -108,33 +104,10 @@ def comment_stream_reader():
             restart = False
             break
 
-    # except:
-    #     pass
-
     # Things that should happen after all comments in this stream are analyzed
 
 
 # TODO: Make post streaming stuff into class, there will be lots of stats and stuff for post streaming
-
-# def get_dynamic_seconds(first_run, first_payload=None):
-#     # previous_time is when the last time the response had data unless it's the first run
-#
-#     diff_sec = int(time.time()) - previous_time
-#     print('Collection Stream started on: {} || Current time: {} || Time since last collection: {}s'.format(
-#         time.strftime('%H:%M:%S', time.localtime(previous_time)), datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-#         diff_sec))
-#
-#     if diff_sec <= 1:
-#         time.sleep(1)
-#         diff_sec = 1
-#     else:
-#         time.sleep(10)
-#         time.sleep(1)
-#         diff_sec = math.ceil(diff_sec + 10)
-#
-#     return str(diff_sec) + 's'
-
-
 reddit = bot_login.authenticate()
 db_tools = db_tools.db_tools()
 comment_stream_reader()
