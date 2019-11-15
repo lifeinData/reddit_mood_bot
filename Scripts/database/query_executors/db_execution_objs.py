@@ -1,10 +1,13 @@
 import psycopg2
+import sys
+sys.path.insert(0,"/app/reddit_mood_bot/")
+from Creds.db import db_creds
 
 def get_db_funct_object():
     try:
-        connection = psycopg2.connect(user="postgres",
-                                      password="Lenovo003352",
-                                      host="127.0.0.1",
+        connection = psycopg2.connect(user=db_creds['user'],
+                                      password=db_creds['pw'],
+                                      host= db_creds['host'],
                                       port="5432",
                                       database="reddit_mood")
     
