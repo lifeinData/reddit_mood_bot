@@ -10,9 +10,14 @@ def convert_to_utc_time(t):
 
 def get_last_response_time(payload):
     # Determines the "After" Parameter time if pushshift is lagging
+    no_response_found = True
     resp = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload)
     payload['sort'] = 'asc'
-    # resp2 = requests.get('https://api.pushshift.io/reddit/search/comment/', params=payload)
-    time_list = [data_point['created_utc'] for data_point in resp.json()['data']]
-    for data_point in resp.json()['data']:
-        return [int(time.time() - data_point['created_utc']), data_point['created_utc']]
+    while no_response_found:
+        try:
+            for data_point in resp.json()['data']:
+                no_response_found = False
+                return [int(time.time() - data_point['created_utc']), data_point['created_utc']]
+        except:
+            print ('No first response found')
+            no_response_found = True

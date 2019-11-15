@@ -5,7 +5,7 @@ import re
 # Custom Imports
 import sys
 
-sys.path.insert(0, '/app/reddit_mood_bot')
+sys.path.insert(0, r'C:/Python Projects/reddit_mood_bot')
 from Scripts.database.query_executors import db_execution_objs as db_func
 
 
