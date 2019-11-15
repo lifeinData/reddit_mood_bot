@@ -29,6 +29,16 @@ class PayloadConfigs():
         else:
             return self.get_ongoing_payload()
 
+    def get_first_payload(self):
+
+        self.get_first_payload_time()  # retrieves the first intance where there is a comment
+        self.size_param = '500'
+        print('First time run through. Going back {}s'.format(self.after_param))
+        return {'after': str(self.after_param) + 's',
+                'size': self.size_param,
+                'subreddit': self.subred_param,
+                'sort': self.sort_param}
+
     def get_first_payload_time(self):
         # TODO: (LOW) Write this more cleanly (hard)
         # Gets the lag time (aka after_param) and the time since epoch of the first comment retrieved since this stream started
@@ -38,16 +48,6 @@ class PayloadConfigs():
                          'sort': self.sort_param}
 
         self.after_param, self.comment_latest_retrieval = time_util.get_last_response_time(first_payload)
-
-    def get_first_payload(self):
-
-        self.get_first_payload_time()
-        self.size_param = '500'
-        print('First time run through. Going back {}s'.format(self.after_param))
-        return {'after': str(self.after_param) + 's',
-                'size': self.size_param,
-                'subreddit': self.subred_param,
-                'sort': self.sort_param}
 
     def get_ongoing_payload(self):
         self.after_param = self.collection_timer()
