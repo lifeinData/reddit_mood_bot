@@ -20,7 +20,7 @@ from Scripts.comment_analyzer.Logger_Messages.Stream_Msg import StreamMsg
 
 class stream_analyzer():
     # TODO: df_sentiment_dict should be part of the database
-    df_sentiment_dict = pd.read_excel(r'C:/Python Projects/reddit_mood_bot/sentiment_dict.xlsx')
+    df_sentiment_dict = pd.read_excel(r'../../sentiment_dict.xlsx')
     word_l = df_sentiment_dict['Word'].tolist()
     print('Sentiment dicitonary loaded')
 
