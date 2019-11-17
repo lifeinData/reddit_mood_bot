@@ -9,12 +9,14 @@ from datetime import datetime
 # Custom Packages
 import sys
 
-sys.path.insert(0, r'C:/Python Projects/reddit_mood_bot')
+#TODO: use SYSPYTHON environment variable
+sys.path.append(r'../../../reddit_mood_bot')
 from Scripts.database.query_executors import database_tools as db_tools
 from Scripts.redditBot_auth import bot_login
 from Scripts.comment_analyzer.helper_methods import time_util
 from Scripts.comment_analyzer.PayloadConfigs import PayloadConfigs
 from Scripts.comment_analyzer.Logger_Messages.Stream_Msg import StreamMsg
+
 
 class stream_analyzer():
     # TODO: df_sentiment_dict should be part of the database
@@ -84,7 +86,6 @@ def comment_stream_reader():
         except:
             continue
 
-
         # TODO: Probably can write this in a cleaner way
         if not first_run:
             if len(resp.json()['data']) > 0:
@@ -94,11 +95,11 @@ def comment_stream_reader():
                 total_comments += len(resp.json()['data'])
                 stream_logger.print_subreddit_count()
                 print("DB Size: {} mb | Tot Comments: {} || Current Collection: {} in {}s".format(
-                    db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']), payload.get_lag_time()))
+                    db_tools.get_db_size("reddit_mood"), total_comments, len(resp.json()['data']),
+                    payload.get_lag_time()))
 
             else:
                 payload.set_comment_flag(False)
-
 
         if db_tools.db_full_check("reddit_mood", db_tools):  # Stop limit for database collection
             restart = False

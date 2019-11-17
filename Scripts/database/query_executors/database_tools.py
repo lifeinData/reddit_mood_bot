@@ -1,13 +1,13 @@
 # TODO: delete the sys import method later on, only need to invoke it once
 
 import re
-
+import os
 # Custom Imports
 import sys
 
-sys.path.insert(0, r'C:/Python Projects/reddit_mood_bot')
+#TODO: Export to PYTHONPATH after
+sys.path.append('../../../../reddit_mood_bot')
 from Scripts.database.query_executors import db_execution_objs as db_func
-
 
 class db_tools:
 
@@ -33,6 +33,7 @@ class db_tools:
             """SELECT pg_database_size(%s)""",
             (db_name,)
         )
+
         db_size = self.cursor.fetchall()
         return round(float(re.findall("\d+", str(db_size[0]))[0]) / 1000000, 2)
 
